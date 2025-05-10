@@ -1,0 +1,26 @@
+-- CreateTable
+CREATE TABLE "Exam" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "date" DATETIME NOT NULL,
+    "totalMarks" INTEGER NOT NULL,
+    "description" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "courseId" INTEGER NOT NULL,
+    CONSTRAINT "Exam_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Grade" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "marks" INTEGER NOT NULL,
+    "grade" TEXT NOT NULL,
+    "remarks" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "examId" INTEGER NOT NULL,
+    "studentId" INTEGER NOT NULL,
+    CONSTRAINT "Grade_examId_fkey" FOREIGN KEY ("examId") REFERENCES "Exam" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Grade_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

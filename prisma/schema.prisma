@@ -1,0 +1,380 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum NotificationType {
+  ANNOUNCEMENT
+  ASSIGNMENT
+  GRADE
+  ATTENDANCE
+  EVENT
+  REMINDER
+  SYSTEM
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum EventType {
+  ACADEMIC
+  SPORTS
+  CULTURAL
+  SOCIAL
+  MEETING
+  HOLIDAY
+  OTHER
+}
+
+enum EventStatus {
+  PLANNED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum ReportType {
+  ACADEMIC_PROGRESS
+  ATTENDANCE_SUMMARY
+  BEHAVIOR_RECORD
+  CLASS_PERFORMANCE
+  EXAM_RESULTS
+  STUDENT_TRANSCRIPT
+  CUSTOM
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      Role
+  firstName String
+  lastName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+
+  // Relations
+  school    School?  @relation(fields: [schoolId], references: [id])
+  schoolId  Int?
+  teacher   Teacher?
+  student   Student?
+  admin     Admin?
+  sentNotifications     Notification[]
+  receivedNotifications NotificationRecipient[]
+  organizedEvents Event[]
+  eventParticipation EventParticipant[]
+  createdReportTemplates ReportTemplate[] @relation("CreatedReportTemplates")
+  generatedReports Report[] @relation("GeneratedReports")
+}
+
+model School {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users     User[]
+  classes   Class[]
+  teachers  Teacher[]
+  students  Student[]
+  admins    Admin[]
+  events    Event[]
+  reports   Report[] @relation("SchoolReports")
+  reportTemplates ReportTemplate[] @relation("SchoolReportTemplates")
+}
+
+model Teacher {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  schoolId  Int
+  school    School   @relation(fields: [schoolId], references: [id])
+  classes   Class[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  schoolId  Int
+  school    School   @relation(fields: [schoolId], references: [id])
+  classId   Int?
+  class     Class?   @relation(fields: [classId], references: [id])
+  attendances Attendance[]
+  grades    Grade[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  profile   StudentProfile?
+  reports   Report[]
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  schoolId  Int
+  school    School   @relation(fields: [schoolId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Class {
+  id        Int       @id @default(autoincrement())
+  name      String
+  schoolId  Int
+  school    School    @relation(fields: [schoolId], references: [id])
+  teacherId Int
+  teacher   Teacher   @relation(fields: [teacherId], references: [id])
+  students  Student[]
+  attendances Attendance[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  reports   Report[]
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  status    AttendanceStatus
+  studentId Int
+  student   Student  @relation(fields: [studentId], references: [id])
+  classId   Int
+  class     Class    @relation(fields: [classId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subject {
+  id          Int      @id @default(autoincrement())
+  name        String
+  code        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  courses Course[]
+}
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  name        String
+  code        String
+  description String?
+  creditHours Int
+  exams       Exam[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId Int
+}
+
+model Exam {
+  id          Int      @id @default(autoincrement())
+  name        String
+  date        DateTime
+  totalMarks  Int
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  course   Course  @relation(fields: [courseId], references: [id])
+  courseId Int
+  grades   Grade[]
+}
+
+model Grade {
+  id        Int      @id @default(autoincrement())
+  marks     Int
+  grade     String
+  remarks   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  exam     Exam    @relation(fields: [examId], references: [id])
+  examId   Int
+  student  Student @relation(fields: [studentId], references: [id])
+  studentId Int
+}
+
+model Guardian {
+  id            Int      @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  email         String
+  phone         String
+  relationship  String
+  address       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  students     StudentProfile[]
+}
+
+model StudentProfile {
+  id            Int      @id @default(autoincrement())
+  dateOfBirth   DateTime
+  gender        String
+  bloodGroup    String?
+  allergies     String?
+  medicalNotes  String?
+  emergencyContact String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  student      Student   @relation(fields: [studentId], references: [id])
+  studentId    Int       @unique
+  guardians    Guardian[]
+}
+
+model Notification {
+  id          Int                @id @default(autoincrement())
+  title       String
+  message     String
+  type        NotificationType
+  priority    NotificationPriority
+  data        Json?              // Additional data in JSON format
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // Relations
+  sender      User               @relation(fields: [senderId], references: [id])
+  senderId    Int
+  recipients  NotificationRecipient[]
+}
+
+model NotificationRecipient {
+  id              Int          @id @default(autoincrement())
+  isRead          Boolean      @default(false)
+  readAt          DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  notification    Notification @relation(fields: [notificationId], references: [id])
+  notificationId  Int
+  recipient       User         @relation(fields: [recipientId], references: [id])
+  recipientId     Int
+
+  @@unique([notificationId, recipientId])
+}
+
+model Event {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  type        EventType
+  status      EventStatus  @default(PLANNED)
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  organizerId Int
+  schoolId    Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  organizer   User         @relation(fields: [organizerId], references: [id])
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  participants EventParticipant[]
+
+  @@index([schoolId])
+}
+
+model EventParticipant {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  userId    Int
+  role      String   // e.g., "ATTENDEE", "ORGANIZER", "VOLUNTEER"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  event     Event    @relation(fields: [eventId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+}
+
+model ReportTemplate {
+  id          Int       @id @default(autoincrement())
+  name        String
+  type        ReportType
+  format      String    // JSON schema for the report structure
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  schoolId    Int
+  createdById Int
+
+  // Relations
+  school     School    @relation("SchoolReportTemplates", fields: [schoolId], references: [id])
+  createdBy  User      @relation("CreatedReportTemplates", fields: [createdById], references: [id])
+  reports    Report[]
+
+  @@index([schoolId])
+  @@index([createdById])
+}
+
+model Report {
+  id              Int       @id @default(autoincrement())
+  title           String
+  type            ReportType
+  data            String    // JSON data for the report
+  generatedAt     DateTime  @default(now())
+  templateId      Int?
+  schoolId        Int
+  generatedById   Int
+  studentId       Int?      // Optional: specific student the report is about
+  classId         Int?      // Optional: specific class the report is about
+
+  // Relations
+  template      ReportTemplate? @relation(fields: [templateId], references: [id])
+  school        School         @relation("SchoolReports", fields: [schoolId], references: [id])
+  generatedBy   User           @relation("GeneratedReports", fields: [generatedById], references: [id])
+  student       Student?       @relation(fields: [studentId], references: [id])
+  class         Class?         @relation(fields: [classId], references: [id])
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([classId])
+  @@index([templateId])
+  @@index([generatedById])
+} 
