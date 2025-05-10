@@ -1,0 +1,61 @@
+graph TD
+  SA[Super Admin]
+  A[Admin]
+  T[Teacher]
+  S[Student]
+  G[Guardian]
+
+  subgraph Auth
+    SA -- can create --> A
+    SA -- can create --> T
+    SA -- can create --> SA
+    A -- can create --> S
+    S -- can update --> S
+    S -- can reset --> S
+  end
+
+  subgraph School
+    A -- manages --> School
+    SA -- manages --> School
+  end
+
+  subgraph Student
+    A -- manages --> S
+    S -- has --> G
+    G -- views --> S
+  end
+
+  subgraph Academic
+    A -- manages --> Subject
+    A -- manages --> Course
+    T -- manages --> Course
+    T -- manages --> Exam
+    T -- manages --> Grade
+    S -- views --> Grade
+  end
+
+  subgraph Attendance
+    T -- records --> Attendance
+    A -- manages --> Attendance
+    S -- views --> Attendance
+  end
+
+  subgraph Notification
+    A -- sends --> Notification
+    T -- sends --> Notification
+    S -- receives --> Notification
+    G -- receives --> Notification
+  end
+
+  subgraph Event
+    A -- manages --> Event
+    T -- manages --> Event
+    S -- participates --> Event
+  end
+
+  subgraph Report
+    A -- generates --> Report
+    T -- generates --> Report
+    S -- views --> Report
+    G -- views --> Report
+  end 
